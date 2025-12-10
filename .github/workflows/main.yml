@@ -15,7 +15,7 @@ jobs:
     env:
       DATABRICKS_HOST: ${{ secrets.DEV_DEPLOYMENT_TARGET_URL }}
       DATABRICKS_TOKEN: ${{ secrets.DEV_DEPLOYMENT_TARGET_TOKEN }}
-      REPO_PATH: <repo-path-from-databricks-workspace>
+      REPO_PATH: /Workspace/Shared/Aspora_Task
 
     steps:
       - name: Checkout repository
