@@ -25,7 +25,7 @@ jobs:
         DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
         DATABRICKS_BUNDLE_ENV: ${{ secrets.DATABRICKS_BUNDLE_ENV }}
         DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-        # DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }} 
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }} 
 
     continue-on-error: false # if job fails, stop the workflow
     steps:
