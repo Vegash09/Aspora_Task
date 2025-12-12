@@ -1,7 +1,11 @@
 name: sample-poc # name of the workflow
  
 on:
-  workflow_dispatch: # manually run this pipeline ( workflow )
+  push:
+    paths-ignore:
+      - .github/**
+    branches:
+      - main
  
 permissions: # permissions for actions
   contents: read # for actions/checkout
