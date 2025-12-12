@@ -1,11 +1,7 @@
-name: sample-dev-Aspora
-
+name: sample-poc # name of the workflow
+ 
 on:
-  push:
-    paths-ignore:
-      - .github/**
-    branches:
-      - main
+  workflow_dispatch: # manually run this pipeline ( workflow )
  
 permissions: # permissions for actions
   contents: read # for actions/checkout
@@ -88,5 +84,3 @@ jobs:
           DATABRICKS_BUNDLE_ENV: ${{ secrets.DATABRICKS_BUNDLE_ENV }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }} 
-  databricks repos update "${{ env.REPO_PATH }}" \
-  #         --branch "${{ steps.extract_branch_prod.outputs.branch }}"
