@@ -6,65 +6,87 @@ on:
       - .github/**
     branches:
       - main
-
+ 
+permissions: # permissions for actions
+  contents: read # for actions/checkout
+ 
+defaults:
+  run:
+    working-directory: . # default working directory for all run steps ( . root directory of repo )
 jobs:
-  deploy-dev:
-    runs-on: ubuntu-latest
-    environment: development
-
+#==========================================================================
+# JOB: Validate Databricks asset bundle
+#==========================================================================  
+  validate: # JOB ID
+    name: Validate databricks asset bundle # JOB NAME
+    runs-on: ubuntu-latest # runner used in the job
     env:
-      DATABRICKS_HOST: ${{ secrets.DEV_DEPLOYMENT_TARGET_URL }}
-      DATABRICKS_TOKEN: ${{ secrets.DEV_DEPLOYMENT_TARGET_TOKEN }}
-      REPO_PATH: /Workspace/Shared/Aspora_Task
+        BUNDLE_VAR_DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+        DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+        DATABRICKS_BUNDLE_ENV: ${{ secrets.DATABRICKS_BUNDLE_ENV }}
+        DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+        # DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }} 
 
+    continue-on-error: false # if job fails, stop the workflow
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.8
-
-      - name: Set up Databricks CLI
+ 
+      # pull code from repo to runner ( )
+      - name: Checkout code # pull code from repo to runner ( )
+        uses: actions/checkout@v4
+ 
+      # install databricks cli  
+      - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
-
-      - name: Extract branch name
-        id: extract_branch
-        run: echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_OUTPUT
-
-      - name: Update Databricks Repo (Dev)
+        
+      - name: Ensure .py files are Databricks notebooks (ubantu-latest)
         run: |
-          databricks repos update "${{ env.REPO_PATH }}" \
-          --branch "${{ steps.extract_branch.outputs.branch }}"
+          Get-ChildItem -Path "${{ github.workspace }}" -Filter "*.py" -Recurse | ForEach-Object {
+            ("# Databricks notebook source`n" + (Get-Content $_.FullName -Raw)) | Set-Content $_.FullName
+          }
+        shell: pwsh
 
-  # deploy-prod:
-  #   needs: deploy-dev
-  #   runs-on: ubuntu-latest
-  #   environment: production
-
-  #   env:
-  #     DATABRICKS_HOST: ${{ secrets.PROD_DEPLOYMENT_TARGET_URL }}
-  #     DATABRICKS_TOKEN: ${{ secrets.PROD_DEPLOYMENT_TARGET_TOKEN }}
-  #     REPO_PATH: /Workspace/Users/abiola.david1@outlook.com/DEV-DATABRICKS-GIT-FOLDER
-
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
-
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v3
-  #       with:
-  #         python-version: 3.8
-
-  #     - name: Set up Databricks CLI
-  #       uses: databricks/setup-cli@main
-
-  #     - name: Extract branch name
-  #       id: extract_branch_prod
-  #       run: echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_OUTPUT
-
-  #     - name: Update Databricks Repo (Prod)
-  #       run: |
-  #         databricks repos update "${{ env.REPO_PATH }}" \
+      # validate databricks asset bundle  
+      - name: Validate bundle
+        run: databricks bundle validate
+        env:
+          BUNDLE_VAR_DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_BUNDLE_ENV: ${{ secrets.DATABRICKS_BUNDLE_ENV }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}       
+#==========================================================================
+# JOB: Deploy Databricks asset bundle
+#==========================================================================  
+  deploy: # JOB ID
+    name: Deploy databricks asset bundle # JOB NAME
+    if: ${{ needs.validate.result == 'success' }}
+    needs: validate # this job depends on validate job
+    runs-on: ubuntu-latest # runner used in the job
+    continue-on-error: false # if job fails, stop the workflow
+    steps:
+ 
+      # pull code from repo to runner ( )
+      - name: Checkout code # pull code from repo to runner ( )
+        uses: actions/checkout@v4
+ 
+      # install databricks cli  
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@main
+        
+      - name: Ensure .py files are Databricks notebooks (ubantu-latest)
+        run: |
+          Get-ChildItem -Path "${{ github.workspace }}" -Filter "*.py" -Recurse | ForEach-Object {
+            ("# Databricks notebook source`n" + (Get-Content $_.FullName -Raw)) | Set-Content $_.FullName
+          }
+        shell: pwsh
+      # validate databricks asset bundle  
+      - name: Deploy bundle
+        run: databricks bundle deploy
+        env:
+          BUNDLE_VAR_DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_BUNDLE_ENV: ${{ secrets.DATABRICKS_BUNDLE_ENV }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }} 
+  databricks repos update "${{ env.REPO_PATH }}" \
   #         --branch "${{ steps.extract_branch_prod.outputs.branch }}"
