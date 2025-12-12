@@ -15,5 +15,5 @@ targets:
     workspace:
       root_path: '/Deployment/CDD_Databricks'
     run_as:
-      service_principal_name: ${var.DATABRICKS_CLIENT_ID}    
+      service_principal_name: "abffc567-fc8b-4a22-b14c-2b6b8c55f65b"   
    
